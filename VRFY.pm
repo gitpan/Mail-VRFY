@@ -1,9 +1,9 @@
 # Mail::VRFY.pm
-# $Id: VRFY.pm,v 0.50 2004/10/06 16:52:32 jkister Exp $
+# $Id: VRFY.pm,v 0.51 2004/10/09 06:52:32 jkister Exp $
 # Copyright (c) 2004 Jeremy Kister.
 # Released under Perl's Artistic License.
 
-$Mail::VRFY::VERSION = "0.50";
+$Mail::VRFY::VERSION = "0.51";
 
 =head1 NAME
 
@@ -30,6 +30,7 @@ addresses.  Lots can be checked, according to the C<method> option,
 as described below.
 
 C<Mail::VRFY> differs from L<Mail::Verify> in that:
+
 A.  More granular control over what kind of checks to run
     (via the method option).
 
@@ -216,6 +217,7 @@ sub CheckAddress {
 				unless($banner[-1] =~ /^220\s/){
 					print $sock "QUIT\r\n"; # be nice
 					close $sock;
+					$misbehave=1;
 					next;
 				}
 			}else{
@@ -235,6 +237,7 @@ sub CheckAddress {
 				unless($helo[-1] =~ /^250\s/){
 					print $sock "QUIT\r\n"; # be nice
 					close $sock;
+					$misbehave=1;
 					next;
 				}
 			}else{
@@ -253,6 +256,7 @@ sub CheckAddress {
 				unless($mf[-1] =~ /^250\s/){
 					print $sock "QUIT\r\n"; # be nice
 					close $sock;
+					$misbehave=1;
 					next;
 				}
 			}else{
