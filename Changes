@@ -1,0 +1,6 @@
+Revision history for Perl extension Mail::VRFY.
+
+0.50  Wed Oct  6 19:02:37 2004
+	- original version; created by h2xs 1.21 with options
+		-AX Mail::VRFY
+
