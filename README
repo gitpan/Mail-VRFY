@@ -1,4 +1,4 @@
-Mail::VRFY version 0.54
+Mail::VRFY version 0.55
 =======================
 
 Mail::VRFY was derived from Pete Fritchman's Mail::Verify.
@@ -23,19 +23,6 @@ C.  After making a socket to an authoritative SMTP server,
 
 D.  More return codes.
 
-Here are a list of return codes and what they mean:
-
-0  The email address appears to be valid.
-1  No email address was supplied.
-2  There is a syntactical error in the email address.
-3  There are no MX or A DNS records for the host in question.
-4  There are no SMTP servers accepting connections for this address.
-5  All SMTP servers are misbehaving and wont accept mail.
-6  All the SMTP servers gave us an unknown result code.
-7  All the SMTP servers temporarily refused mail to this address.
-8  One of the SMTP servers permanently refused mail to this address.
-
-
 
 INSTALLATION
 
@@ -46,12 +33,15 @@ To install this module type the following:
    make test
    make install
 
+
 DEPENDENCIES
 
 This module requires these other modules and libraries:
 
 	IO::Socket::INET
+   IO::Select
 	Net::DNS
+
 
 COPYRIGHT AND LICENCE
 

@@ -1,9 +1,9 @@
 # Mail::VRFY.pm
-# $Id: VRFY.pm,v 0.54 2004/10/27 12:57:24 jkister Exp $
+# $Id: VRFY.pm,v 0.55 2004/11/16 17:45:54 jkister Exp $
 # Copyright (c) 2004 Jeremy Kister.
 # Released under Perl's Artistic License.
 
-$Mail::VRFY::VERSION = "0.54";
+$Mail::VRFY::VERSION = "0.55";
 
 =head1 NAME
 
@@ -15,9 +15,10 @@ use Mail::VRFY;
 
 my $result = Mail::VRFY::CheckAddress($emailaddress);
 
-my $result = Mail::VRFY::CheckAddress(addr   => $emailaddress,
-                                      method => 'extended',
-                                      debug  => 0);
+my $result = Mail::VRFY::CheckAddress(addr    => $emailaddress,
+                                      method  => 'extended',
+                                      timeout => 12,
+                                      debug   => 0);
 	
 =head1 DESCRIPTION
 
@@ -64,6 +65,8 @@ B<method> - Which method of checking should be used:
 
    extended - compat + talk SMTP to see if server will reject RCPT TO
 
+B<timeout> - Number of seconds to wait for data from remote host (Default: 12).
+
 B<debug> - Print debugging info to STDERR (0=Off, 1=On).
 
 =head1 RETURN VALUE
@@ -82,11 +85,9 @@ Here are a list of return codes and what they mean:
 
 =item 5 All SMTP servers are misbehaving and wont accept mail.
 
-=item 6 All the SMTP servers gave an unknown code after RCPT TO.
+=item 6 All the SMTP servers temporarily refused mail.
 
-=item 7 All the SMTP servers temporarily refused mail.
-
-=item 8 One SMTP server permanently refused mail to this address.
+=item 7 One SMTP server permanently refused mail to this address.
 
 =head1 EXAMPLES
 
@@ -109,8 +110,8 @@ An SMTP server can reject RCPT TO at SMTP time, or it can accept all
 recipients, and send bounces later.  All other things being equal,
 Mail::VRFY will not detect the invalid email address in the latter case.
 
-Greylisters will cause you pain; look out for return code 7.  Some
-users will want to deem email addresses returning code 7 invalid,
+Greylisters will cause you pain; look out for return code 6.  Some
+users will want to deem email addresses returning code 6 invalid,
 others will want to assume they are valid.
 
 =head1 RESTRICTIONS
@@ -133,6 +134,7 @@ package Mail::VRFY;
 
 use strict;
 use IO::Socket::INET;
+use IO::Select;
 use Net::DNS;
 use Sys::Hostname;
 
@@ -148,6 +150,12 @@ sub CheckAddress {
 		%arg = @_;
 	}
 	return 1 unless $arg{addr};
+	if(exists($arg{timeout})){
+		print STDERR "using timeout of $arg{timeout} seconds\n" if($arg{debug} == 1);
+	}else{
+		$arg{timeout} = 12;
+		print STDERR "using default timeout of 12 seconds\n" if($arg{debug} == 1);
+	}
 
 	my ($user,$domain,@mxhosts);
 
@@ -191,13 +199,12 @@ sub CheckAddress {
 	}
 	my $misbehave=0;
 	my $tmpfail=0;
-	my $unknown=0;
 	my $livesmtp=0;
 	foreach my $mx (@mxhosts) {
 		my $sock = IO::Socket::INET->new(Proto=>'tcp',
 		                                 PeerAddr=> $mx,
 		                                 PeerPort=> 25,
-		                                 Timeout => 12
+		                                 Timeout => $arg{timeout}
 		                                );
 		if($sock){
 			print "connected to ${mx}\n" if($arg{debug} == 1);
@@ -207,7 +214,10 @@ sub CheckAddress {
 				return 0;
 			}		
 
-			my @banner = getlines($sock);
+			my $select = IO::Select->new;
+			$select->add($sock);
+
+			my @banner = _getlines($select,$arg{timeout});
 			if(@banner){
 				if($arg{debug} == 1){
 					print "BANNER: ";
@@ -218,16 +228,18 @@ sub CheckAddress {
 					print $sock "QUIT\r\n"; # be nice
 					close $sock;
 					$misbehave=1;
+					print STDERR "$mx misbehaving: bad banner\n" if($arg{debug} == 1);
 					next;
 				}
 			}else{
-				print STDERR "$mx not behaving correctly\n" if($arg{debug} == 1);
+				print STDERR "$mx misbehaving while retrieving banner\n" if($arg{debug} == 1);
 				$misbehave=1;
+				next;
 			}
 
 			my $me = hostname();
 			print $sock "HELO $me\r\n";
-			my @helo = getlines($sock);
+			my @helo = _getlines($select,$arg{timeout});
 			if(@helo){
 				if($arg{debug} == 1){
 					print "HELO: ";
@@ -238,15 +250,17 @@ sub CheckAddress {
 					print $sock "QUIT\r\n"; # be nice
 					close $sock;
 					$misbehave=1;
+					print STDERR "$mx misbehaving: bad reply to HELO\n" if($arg{debug} == 1);
 					next;
 				}
 			}else{
-				print STDERR "$mx not behaving correctly\n" if($arg{debug} == 1);
+				print STDERR "$mx misbehaving while retrieving helo\n" if($arg{debug} == 1);
 				$misbehave=1;
+				next;
 			}
 
 			print $sock "MAIL FROM:<>\r\n";
-			my @mf = getlines($sock);
+			my @mf = _getlines($select,$arg{timeout});
 			if(@mf){
 				if($arg{debug} == 1){
 					print "MAIL FROM: ";
@@ -257,15 +271,17 @@ sub CheckAddress {
 					print $sock "QUIT\r\n"; # be nice
 					close $sock;
 					$misbehave=1;
+					print STDERR "$mx misbehaving: bad reply to MAIL FROM\n" if($arg{debug} == 1);
 					next;
 				}
 			}else{
-				print STDERR "$mx not behaving correctly\n" if($arg{debug} == 1);
+				print STDERR "$mx misbehaving while retrieving mail from\n" if($arg{debug} == 1);
 				$misbehave=1;
+				next;
 			}
 
 			print $sock "RCPT TO:<$arg{addr}>\r\n";
-			my @rt = getlines($sock);
+			my @rt = _getlines($select,$arg{timeout});
 			print $sock "QUIT\r\n"; # be nice
 			close $sock;
 			if(@rt){
@@ -282,33 +298,38 @@ sub CheckAddress {
 					$tmpfail=1;
 				}elsif($rt[-1] =~ /^5\d{2}/){
 					# host rejected
-					return 8;
+					return 7;
 				}else{
-					$unknown=1;
+					$misbehave=1;
+					print STDERR "$mx misbehaving: bad reply to RCPT TO\n" if($arg{debug} == 1);
+					next;
 				}
 			}else{
-				print STDERR "$mx not behaving correctly\n" if($arg{debug} == 1);
 				$misbehave=1;
+				print STDERR "$mx not behaving correcly while retrieving rcpt to\n" if($arg{debug} == 1);
+				next;
 			}
 		}
 	}
 	return 4 unless($livesmtp);
 	return 5 if($misbehave);
-	return 6 if($unknown);
-	return 7 if($tmpfail);
+	return 6 if($tmpfail);
 	return 0;
 }
 
-sub getlines {
-	my $sock = shift;
+sub _getlines {
+	my $select = shift || die "_getlines syntax error 1";
+	my $timeout = shift || die "_getlines syntax error 2";
 	my @lines;
-	while(<$sock>){
-		if(/^\d+\s/){
-			chomp;
-			push @lines, $_;
-			last;
-		}else{
-			push @lines, $_;
+	if(my ($pending) = $select->can_read($timeout)){
+		while(<$pending>){
+			if(/^\d+\s/){
+				chomp;
+				push @lines, $_;
+				last;
+			}else{
+				push @lines, $_;
+			}
 		}
 	}
 	return(@lines);

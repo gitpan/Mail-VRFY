@@ -5,17 +5,18 @@ use Mail::VRFY;
 
 my @emails = qw/postmaster@rfc-ignorant.org postmaster@iana.org postmaster@nanog.org/;
 
+my $version = Mail::VRFY::Version();
+print "testing Mail::VRFY v${version}\n";
+
 foreach my $email (@emails){
 	print "Testing ${email}...\n";
-	my $result = Mail::VRFY::CheckAddress(addr => $email, method => 'extended', debug => 0);
+	my $result = Mail::VRFY::CheckAddress(addr => $email, method => 'extended', timeout => 12, debug => 0);
 	if($result) {
 		print "Invalid email address: ";
-		if($result == 8){
+		if($result == 7){
 			print "MX Server permanently refused mail\n";
-		}elsif($result == 7){
-			print "All SMTP servers temporarily refused mail\n";
 		}elsif($result == 6){
-			print "All SMTP servers gave us an unknown result\n";
+			print "All SMTP servers temporarily refused mail\n";
 		}elsif($result == 5){
 			print "All SMTP servers are misbehaving and not accepting mail\n";
 		}elsif($result == 4){

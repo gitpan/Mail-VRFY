@@ -1,5 +1,11 @@
 Revision history for Perl extension Mail::VRFY.
 
+0.55 Tue Nov 16 17:45:54 2004
+   - set reading timer to ensure slow servers dont hold us
+     up forever
+   - corrected code for dealing with misbehaving servers.
+   - added configurable timeout option
+
 0.54  Wed Oct 27 01:19:23 2004
    - test.pl is no longer interactive, so that un-attended
      installs are possible.
