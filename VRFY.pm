@@ -1,9 +1,9 @@
 # Mail::VRFY.pm
-# $Id: VRFY.pm,v 0.52 2004/10/11 14:23:32 jkister Exp $
+# $Id: VRFY.pm,v 0.53 2004/10/18 18:47:24 jkister Exp $
 # Copyright (c) 2004 Jeremy Kister.
 # Released under Perl's Artistic License.
 
-$Mail::VRFY::VERSION = "0.52";
+$Mail::VRFY::VERSION = "0.53";
 
 =head1 NAME
 
@@ -82,7 +82,7 @@ Here are a list of return codes and what they mean:
 
 =item 5 All SMTP servers are misbehaving and wont accept mail.
 
-=item 6 All the SMTP servers gave us an unknown result code.
+=item 6 All the SMTP servers gave an unknown code after RCPT TO.
 
 =item 7 All the SMTP servers temporarily refused mail.
 
@@ -110,7 +110,7 @@ recipients, and send bounces later.  All other things being equal,
 Mail::VRFY will not detect the invalid email address in the latter case.
 
 Greylisters will cause you pain; look out for return code 7.  Some
-users will want to deem email addresses returning code 7 are invalid,
+users will want to deem email addresses returning code 7 invalid,
 others will want to assume they are valid.
 
 =head1 RESTRICTIONS
@@ -195,10 +195,10 @@ sub CheckAddress {
 	my $livesmtp=0;
 	foreach my $mx (@mxhosts) {
 		my $sock = IO::Socket::INET->new(Proto=>'tcp',
-													PeerAddr=> $mx,
-													PeerPort=> 25,
-													Timeout => 12
-												 );
+		                                 PeerAddr=> $mx,
+		                                 PeerPort=> 25,
+		                                 Timeout => 12
+		                                );
 		if($sock){
 			print "connected to ${mx}\n" if(exists($arg{debug}));
 			$livesmtp=1;
@@ -268,7 +268,7 @@ sub CheckAddress {
 			my @rt = getlines($sock);
 			print $sock "QUIT\r\n"; # be nice
 			close $sock;
-			if(@mf){
+			if(@rt){
 				if(exists($arg{debug})){
 					print "RECIPIENT TO: ";
 					print for(@rt);

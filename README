@@ -1,4 +1,4 @@
-Mail::VRFY version 0.52
+Mail::VRFY version 0.53
 =======================
 
 Mail::VRFY was derived from Pete Fritchman's Mail::Verify.
@@ -50,7 +50,7 @@ DEPENDENCIES
 
 This module requires these other modules and libraries:
 
-   IO::Socket::INET
+	IO::Socket::INET
 	Net::DNS
 
 COPYRIGHT AND LICENCE

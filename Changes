@@ -1,5 +1,9 @@
 Revision history for Perl extension Mail::VRFY.
 
+0.53  Mon Oct 18 18:47:24 2004
+   - fixed typo checking @mf when we meant to check @rt
+     (allowing some misbehaving servers to get by us)
+
 0.52  Mon Oct 11 14:24:05 2004
    - updated documentation to show 'CheckAddress' instead
      of mis-spelled ChkAddress
