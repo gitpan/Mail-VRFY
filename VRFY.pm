@@ -1,9 +1,9 @@
 # Mail::VRFY.pm
-# $Id: VRFY.pm,v 0.53 2004/10/18 18:47:24 jkister Exp $
+# $Id: VRFY.pm,v 0.54 2004/10/27 12:57:24 jkister Exp $
 # Copyright (c) 2004 Jeremy Kister.
 # Released under Perl's Artistic License.
 
-$Mail::VRFY::VERSION = "0.53";
+$Mail::VRFY::VERSION = "0.54";
 
 =head1 NAME
 
@@ -121,7 +121,7 @@ will work fine on email addresses as we usually think of them.
 
 "Foo, Bar" <test((foo) b`ar baz)@example(hi there!).com>
 
-be be considered valid ?)
+to be considered valid ?)
 
 =head1 AUTHOR
 
@@ -153,18 +153,18 @@ sub CheckAddress {
 
 	# First, we check the syntax of the email address.
 	if(length($arg{addr}) > 256){
-		 print STDERR "email address is more than 256 characters\n" if exists($arg{debug});
+		 print STDERR "email address is more than 256 characters\n" if($arg{debug} == 1);
 		 return 2;
 	}
 	if($arg{addr} =~ /^(([a-z0-9_\.\+\-\=\?\^\#]){1,64})\@((([a-z0-9\-]){1,251}\.){1,252}[a-z0-9]{2,4})$/i){
 		$user = $1;
 		$domain = $3;
 		if(length($domain) > 255){
-			print STDERR "domain in email address is more than 255 characters\n" if exists($arg{debug});
+			print STDERR "domain in email address is more than 255 characters\n" if($arg{debug} == 1);
 			return 2;
 		}
 	}else{
-		 print STDERR "email address does not look correct\n" if exists($arg{debug});
+		 print STDERR "email address does not look correct\n" if($arg{debug} == 1);
 		 return 2;
 	}
 	return 0 if($arg{method} eq 'syntax');
@@ -184,7 +184,7 @@ sub CheckAddress {
 		}
 		return 3 unless @mxhosts;
 	}
-	if($arg{debug}){
+	if($arg{debug} == 1){
 		foreach( @mxhosts ) {
 			print STDERR "\@mxhosts -> $_\n";
 		}
@@ -200,7 +200,7 @@ sub CheckAddress {
 		                                 Timeout => 12
 		                                );
 		if($sock){
-			print "connected to ${mx}\n" if(exists($arg{debug}));
+			print "connected to ${mx}\n" if($arg{debug} == 1);
 			$livesmtp=1;
 			if($arg{method} eq 'compat'){
 				close $sock;
@@ -209,7 +209,7 @@ sub CheckAddress {
 
 			my @banner = getlines($sock);
 			if(@banner){
-				if(exists($arg{debug})){
+				if($arg{debug} == 1){
 					print "BANNER: ";
 					for(@banner){ print " $_"; }
 					print "\n";
@@ -221,7 +221,7 @@ sub CheckAddress {
 					next;
 				}
 			}else{
-				print STDERR "$mx not behaving correctly\n" if(exists($arg{debug}));
+				print STDERR "$mx not behaving correctly\n" if($arg{debug} == 1);
 				$misbehave=1;
 			}
 
@@ -229,7 +229,7 @@ sub CheckAddress {
 			print $sock "HELO $me\r\n";
 			my @helo = getlines($sock);
 			if(@helo){
-				if(exists($arg{debug})){
+				if($arg{debug} == 1){
 					print "HELO: ";
 					print for(@helo);
 					print "\n";
@@ -241,14 +241,14 @@ sub CheckAddress {
 					next;
 				}
 			}else{
-				print STDERR "$mx not behaving correctly\n" if(exists($arg{debug}));
+				print STDERR "$mx not behaving correctly\n" if($arg{debug} == 1);
 				$misbehave=1;
 			}
 
 			print $sock "MAIL FROM:<>\r\n";
 			my @mf = getlines($sock);
 			if(@mf){
-				if(exists($arg{debug})){
+				if($arg{debug} == 1){
 					print "MAIL FROM: ";
 					print for(@mf);
 					print "\n";
@@ -260,7 +260,7 @@ sub CheckAddress {
 					next;
 				}
 			}else{
-				print STDERR "$mx not behaving correctly\n" if(exists($arg{debug}));
+				print STDERR "$mx not behaving correctly\n" if($arg{debug} == 1);
 				$misbehave=1;
 			}
 
@@ -269,7 +269,7 @@ sub CheckAddress {
 			print $sock "QUIT\r\n"; # be nice
 			close $sock;
 			if(@rt){
-				if(exists($arg{debug})){
+				if($arg{debug} == 1){
 					print "RECIPIENT TO: ";
 					print for(@rt);
 					print "\n";
@@ -287,7 +287,7 @@ sub CheckAddress {
 					$unknown=1;
 				}
 			}else{
-				print STDERR "$mx not behaving correctly\n" if(exists($arg{debug}));
+				print STDERR "$mx not behaving correctly\n" if($arg{debug} == 1);
 				$misbehave=1;
 			}
 		}

@@ -1,5 +1,10 @@
 Revision history for Perl extension Mail::VRFY.
 
+0.54  Wed Oct 27 01:19:23 2004
+   - test.pl is no longer interactive, so that un-attended
+     installs are possible.
+   - fixed behavior of "debug => 0"
+
 0.53  Mon Oct 18 18:47:24 2004
    - fixed typo checking @mf when we meant to check @rt
      (allowing some misbehaving servers to get by us)
