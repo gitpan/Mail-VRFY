@@ -1,5 +1,9 @@
 Revision history for Perl extension Mail::VRFY.
 
+0.52  Mon Oct 11 14:24:05 2004
+   - updated documentation to show 'CheckAddress' instead
+     of mis-spelled ChkAddress
+
 0.51  Sat Oct 10 07:00:03 2004
    - added more SMTP converstation support
 

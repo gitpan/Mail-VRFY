@@ -1,9 +1,9 @@
 # Mail::VRFY.pm
-# $Id: VRFY.pm,v 0.51 2004/10/09 06:52:32 jkister Exp $
+# $Id: VRFY.pm,v 0.52 2004/10/11 14:23:32 jkister Exp $
 # Copyright (c) 2004 Jeremy Kister.
 # Released under Perl's Artistic License.
 
-$Mail::VRFY::VERSION = "0.51";
+$Mail::VRFY::VERSION = "0.52";
 
 =head1 NAME
 
@@ -13,11 +13,11 @@ Mail::VRFY - Utility to verify an email address
 
 use Mail::VRFY;
 
-my $result = Mail::VRFY::ChkAddress($emailaddress);
+my $result = Mail::VRFY::CheckAddress($emailaddress);
 
-my $result = Mail::VRFY::ChkAddress(addr   => $emailaddress,
-                                    method => 'extended',
-                                    debug  => 0);
+my $result = Mail::VRFY::CheckAddress(addr   => $emailaddress,
+                                      method => 'extended',
+                                      debug  => 0);
 	
 =head1 DESCRIPTION
 
