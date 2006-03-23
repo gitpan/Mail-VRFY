@@ -1,5 +1,8 @@
 Revision history for Perl extension Mail::VRFY.
 
+0.56 Tue Feb 21 19:12:33 2006
+   - attempt to use Sys::Hostname::Long for a FQDN at HELO
+
 0.55 Tue Nov 16 17:45:54 2004
    - set reading timer to ensure slow servers dont hold us
      up forever
@@ -20,7 +23,7 @@ Revision history for Perl extension Mail::VRFY.
      of mis-spelled ChkAddress
 
 0.51  Sat Oct 10 07:00:03 2004
-   - added more SMTP converstation support
+   - added more SMTP conversation support
 
 0.50  Wed Oct  6 19:02:37 2004
 	- original version; created by h2xs 1.21 with options

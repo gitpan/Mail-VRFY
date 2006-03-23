@@ -1,9 +1,9 @@
 # Mail::VRFY.pm
-# $Id: VRFY.pm,v 0.55 2004/11/16 17:45:54 jkister Exp $
-# Copyright (c) 2004 Jeremy Kister.
+# $Id: VRFY.pm,v 0.56 2006/02/21 19:13:32 jkister Exp $
+# Copyright (c) 2004-2006 Jeremy Kister.
 # Released under Perl's Artistic License.
 
-$Mail::VRFY::VERSION = "0.55";
+$Mail::VRFY::VERSION = "0.56";
 
 =head1 NAME
 
@@ -106,7 +106,7 @@ Here are a list of return codes and what they mean:
 
 =head1 CAVEATS
 
-An SMTP server can reject RCPT TO at SMTP time, or it can accept all
+A SMTP server can reject RCPT TO at SMTP time, or it can accept all
 recipients, and send bounces later.  All other things being equal,
 Mail::VRFY will not detect the invalid email address in the latter case.
 
@@ -126,7 +126,7 @@ to be considered valid ?)
 
 =head1 AUTHOR
 
-Jeremy Kister - http://jeremy.kister.net/
+<a href="http://jeremy.kister.net./">Jeremy Kister</a>
 
 =cut
 
@@ -136,7 +136,7 @@ use strict;
 use IO::Socket::INET;
 use IO::Select;
 use Net::DNS;
-use Sys::Hostname;
+use Sys::Hostname::Long;
 
 sub Version { $Mail::VRFY::VERSION }
 
@@ -237,7 +237,7 @@ sub CheckAddress {
 				next;
 			}
 
-			my $me = hostname();
+			my $me = hostname_long();
 			print $sock "HELO $me\r\n";
 			my @helo = _getlines($select,$arg{timeout});
 			if(@helo){
