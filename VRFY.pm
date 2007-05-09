@@ -1,9 +1,9 @@
 # Mail::VRFY.pm
-# $Id: VRFY.pm,v 0.56 2006/02/21 19:13:32 jkister Exp $
-# Copyright (c) 2004-2006 Jeremy Kister.
+# $Id: VRFY.pm,v 0.57 2007/05/04 13:16:52 jkister Exp $
+# Copyright (c) 2004-2007 Jeremy Kister.
 # Released under Perl's Artistic License.
 
-$Mail::VRFY::VERSION = "0.56";
+$Mail::VRFY::VERSION = "0.57";
 
 =head1 NAME
 
@@ -66,6 +66,8 @@ B<method> - Which method of checking should be used:
    extended - compat + talk SMTP to see if server will reject RCPT TO
 
 B<timeout> - Number of seconds to wait for data from remote host (Default: 12).
+   this is a per-operation timeout, meaning there is a separate timeout on
+   a DNS query, and each smtp conversation.
 
 B<debug> - Print debugging info to STDERR (0=Off, 1=On).
 
@@ -177,26 +179,37 @@ sub CheckAddress {
 	}
 	return 0 if($arg{method} eq 'syntax');
 
-	my @mxrr = Net::DNS::mx( $domain );
-	# Get the A record for each MX RR
-	foreach my $rr (@mxrr) {
-		push( @mxhosts, $rr->exchange );
-	}
-	unless(@mxhosts) { # check for an A record...
-		my $resolver = new Net::DNS::Resolver;
-		my $dnsquery = $resolver->search( $domain );
-		return 3 unless $dnsquery;
-		foreach my $rr ($dnsquery->answer) {
-			next unless $rr->type eq "A";
-			push( @mxhosts, $rr->address );
+	eval {
+		local $SIG{ALRM} = sub { die "Timeout.\n"; };
+		alarm($arg{timeout});
+		my @mxrr = Net::DNS::mx( $domain );
+		# Get the A record for each MX RR
+		foreach my $rr (@mxrr) {
+			push( @mxhosts, $rr->exchange );
 		}
-		return 3 unless @mxhosts;
-	}
-	if($arg{debug} == 1){
-		foreach( @mxhosts ) {
-			print STDERR "\@mxhosts -> $_\n";
+		unless(@mxhosts) { # check for an A record...
+			my $resolver = new Net::DNS::Resolver;
+			my $dnsquery = $resolver->search( $domain );
+			return 3 unless $dnsquery;
+			foreach my $rr ($dnsquery->answer) {
+				next unless $rr->type eq "A";
+				push( @mxhosts, $rr->address );
+			}
+			return 3 unless @mxhosts;
 		}
+		if($arg{debug} == 1){
+			foreach( @mxhosts ) {
+				print STDERR "\@mxhosts -> $_\n";
+			}
+		}
+	};
+	alarm(0);
+
+	if($@){
+		print STDERR "problem resolving in the DNS: $@\n" if($arg{debug} == 1);
+		return 3;
 	}
+
 	my $misbehave=0;
 	my $tmpfail=0;
 	my $livesmtp=0;
@@ -312,7 +325,7 @@ sub CheckAddress {
 		}
 	}
 	return 4 unless($livesmtp);
-	return 5 if($misbehave);
+	return 5 if($misbehave && !$tmpfail);
 	return 6 if($tmpfail);
 	return 0;
 }

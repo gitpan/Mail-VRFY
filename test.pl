@@ -3,7 +3,7 @@
 use strict;
 use Mail::VRFY;
 
-my @emails = qw/postmaster@rfc-ignorant.org postmaster@iana.org postmaster@nanog.org/;
+my @emails = qw/postmaster@rfc-ignorant.org postmaster@aol.com postmaster@nanog.org/;
 
 my $version = Mail::VRFY::Version();
 print "testing Mail::VRFY v${version}\n";

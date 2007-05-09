@@ -1,5 +1,10 @@
 Revision history for Perl extension Mail::VRFY.
 
+0.57 Fri May  4 13:16:52 EDT 2007
+   - alarm after timeout seconds for dns
+   - return code 5 sent only if no mailserver sends temporary error
+     (Thanks Sebastian Ganschow)
+
 0.56 Tue Feb 21 19:12:33 2006
    - attempt to use Sys::Hostname::Long for a FQDN at HELO
 
