@@ -1,4 +1,4 @@
-Mail::VRFY version 0.56
+Mail::VRFY version 0.58
 =======================
 
 Mail::VRFY was derived from Pete Fritchman's Mail::Verify.
@@ -19,7 +19,7 @@ B.  Email address syntax checking is much more stringent,
 
 C.  After making a socket to an authoritative SMTP server,
     we can start a SMTP converstation, to ensure the
-    mailserver does not give a permanent failure on RCPT TO.
+    mailserver does not give a failure on RCPT TO.
 
 D.  More return codes.
 
@@ -45,7 +45,7 @@ This module requires these other modules and libraries:
 
 COPYRIGHT AND LICENCE
 
-	Copyright (C) 2004 Jeremy Kister.
+	Copyright (C) 2004-2008 Jeremy Kister.
 
 	This software may be copied and distributed under the terms
 	found in the Perl "Artistic License".

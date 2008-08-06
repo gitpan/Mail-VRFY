@@ -1,5 +1,12 @@
 Revision history for Perl extension Mail::VRFY.
 
+0.58 Wed Aug  6 08:13:32 EDT 2008
+	- fix bug where dns error will not return correct code due to
+     timeout feature in 0.57
+     (Thanks NINE) http://rt.cpan.org/Public/Bug/Display.html?id=35950
+   - added an English function that can convert the return codes
+     into an English string
+
 0.57 Fri May  4 13:16:52 EDT 2007
    - alarm after timeout seconds for dns
    - return code 5 sent only if no mailserver sends temporary error

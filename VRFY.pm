@@ -1,9 +1,9 @@
 # Mail::VRFY.pm
-# $Id: VRFY.pm,v 0.57 2007/05/04 13:16:52 jkister Exp $
-# Copyright (c) 2004-2007 Jeremy Kister.
+# $Id: VRFY.pm,v 0.58 2008/08/06 08:13:32 jkister Exp $
+# Copyright (c) 2004-2008 Jeremy Kister.
 # Released under Perl's Artistic License.
 
-$Mail::VRFY::VERSION = "0.57";
+$Mail::VRFY::VERSION = "0.58";
 
 =head1 NAME
 
@@ -13,12 +13,15 @@ Mail::VRFY - Utility to verify an email address
 
 use Mail::VRFY;
 
-my $result = Mail::VRFY::CheckAddress($emailaddress);
+my $code = Mail::VRFY::CheckAddress($emailaddress);
 
-my $result = Mail::VRFY::CheckAddress(addr    => $emailaddress,
-                                      method  => 'extended',
-                                      timeout => 12,
-                                      debug   => 0);
+my $code = Mail::VRFY::CheckAddress(addr    => $emailaddress,
+                                    method  => 'extended',
+                                    timeout => 12,
+                                    debug   => 0);
+
+my $english = Mail::VRFY::English($code);
+
 	
 =head1 DESCRIPTION
 
@@ -39,7 +42,7 @@ B.  Email address syntax checking is much more stringent.
 
 C.  After making a socket to an authoritative SMTP server,
     we can start a SMTP converstation, to ensure the
-    mailserver does not give a permanent failure on RCPT TO.
+    mailserver does not give a failure on RCPT TO.
 
 D.  More return codes.
 
@@ -91,6 +94,9 @@ Here are a list of return codes and what they mean:
 
 =item 7 One SMTP server permanently refused mail to this address.
 
+This module provides an English sub that will convert the code to
+English for you.
+
 =head1 EXAMPLES
 
   use Mail::VRFY;
@@ -99,11 +105,12 @@ Here are a list of return codes and what they mean:
     print "email address to be tested: ";
     chop($email=<STDIN>);
   }
-  my $result = Mail::VRFY::CheckAddress($email);
-  if($result){
-    print "Invalid email address: ${result}\n";
+  my $code = Mail::VRFY::CheckAddress($email);
+   my $english = Mail::VRFY::English($code);
+  if($code){
+    print "Invalid email address: $english  (code: $code)\n";
   }else{
-    print "$email seems to be valid\n";
+    print "$english\n";
   }
 
 =head1 CAVEATS
@@ -142,6 +149,20 @@ use Sys::Hostname::Long;
 
 sub Version { $Mail::VRFY::VERSION }
 
+sub English {
+	my $code = shift;
+	my @english = ( 'Email address seems valid.',
+	                'No email address supplied.',
+	                'Syntax error in email address.',
+	                'No MX or A DNS records for this domain.',
+	                'No advertised SMTP servers are accepting mail.',
+	                'All advertised SMTP servers are misbehaving and wont accept mail.',
+	                'All advertised SMTP servers are temporarily refusing mail.',
+	                'One Advertised SMTP server permanently refused mail.',
+	              );
+	return $english[$code] || "Unknown code: $code";
+}
+
 sub CheckAddress {
 	my %arg;
 	if(@_ % 2){
@@ -166,7 +187,9 @@ sub CheckAddress {
 		 print STDERR "email address is more than 256 characters\n" if($arg{debug} == 1);
 		 return 2;
 	}
-	if($arg{addr} =~ /^(([a-z0-9_\.\+\-\=\?\^\#]){1,64})\@((([a-z0-9\-]){1,251}\.){1,252}[a-z0-9]{2,4})$/i){
+	if($arg{addr} =~ /^(([a-z0-9_\.\+\-\=\?\^\#]){1,64})\@((([a-z0-9\-]){1,251}\.){1,252}[a-z0-9]{2,6})$/i){
+		# http://data.iana.org/TLD/tlds-alpha-by-domain.txt  says all tlds >=2 && <= 6
+		# we don't support the .XN-- insanity
 		$user = $1;
 		$domain = $3;
 		if(length($domain) > 255){
@@ -179,7 +202,7 @@ sub CheckAddress {
 	}
 	return 0 if($arg{method} eq 'syntax');
 
-	eval {
+	my $dnscheck = eval {
 		local $SIG{ALRM} = sub { die "Timeout.\n"; };
 		alarm($arg{timeout});
 		my @mxrr = Net::DNS::mx( $domain );
@@ -209,6 +232,8 @@ sub CheckAddress {
 		print STDERR "problem resolving in the DNS: $@\n" if($arg{debug} == 1);
 		return 3;
 	}
+
+	return $dnscheck unless(@mxhosts);
 
 	my $misbehave=0;
 	my $tmpfail=0;
