@@ -10,7 +10,7 @@ print "testing Mail::VRFY v${version}\n";
 
 foreach my $email (@emails){
 	print "Testing ${email}...\n";
-	my $code = Mail::VRFY::CheckAddress(addr => $email, method => 'extended', timeout => 12, debug => 0);
+	my $code = Mail::VRFY::CheckAddress(addr => $email, method => 'extended', timeout => 21, debug => 0);
 
 	print Mail::VRFY::English($code) ."\n";
 	exit unless($code);

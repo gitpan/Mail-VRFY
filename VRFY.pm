@@ -1,9 +1,9 @@
 # Mail::VRFY.pm
-# $Id: VRFY.pm,v 0.58 2008/08/06 08:13:32 jkister Exp $
-# Copyright (c) 2004-2008 Jeremy Kister.
+# $Id: VRFY.pm,v 1.00 2009/11/23 05:06:32 jkister Exp $
+# Copyright (c) 2004-2009 Jeremy Kister.
 # Released under Perl's Artistic License.
 
-$Mail::VRFY::VERSION = "0.58";
+$Mail::VRFY::VERSION = "1.00";
 
 =head1 NAME
 
@@ -106,7 +106,7 @@ English for you.
     chop($email=<STDIN>);
   }
   my $code = Mail::VRFY::CheckAddress($email);
-   my $english = Mail::VRFY::English($code);
+  my $english = Mail::VRFY::English($code);
   if($code){
     print "Invalid email address: $english  (code: $code)\n";
   }else{
@@ -121,7 +121,8 @@ Mail::VRFY will not detect the invalid email address in the latter case.
 
 Greylisters will cause you pain; look out for return code 6.  Some
 users will want to deem email addresses returning code 6 invalid,
-others will want to assume they are valid.
+others valid, and others will set up a queing mechanism to try again
+later.
 
 =head1 RESTRICTIONS
 
@@ -135,7 +136,7 @@ to be considered valid ?)
 
 =head1 AUTHOR
 
-<a href="http://jeremy.kister.net./">Jeremy Kister</a>
+Jeremy Kister : http://jeremy.kister.net./
 
 =cut
 
@@ -180,6 +181,10 @@ sub CheckAddress {
 		print STDERR "using default timeout of 12 seconds\n" if($arg{debug} == 1);
 	}
 
+	if(exists($arg{from})){
+		print STDERR "using specified envelope sender address: $arg{from}\n";
+	}
+
 	my ($user,$domain,@mxhosts);
 
 	# First, we check the syntax of the email address.
@@ -187,7 +192,7 @@ sub CheckAddress {
 		 print STDERR "email address is more than 256 characters\n" if($arg{debug} == 1);
 		 return 2;
 	}
-	if($arg{addr} =~ /^(([a-z0-9_\.\+\-\=\?\^\#]){1,64})\@((([a-z0-9\-]){1,251}\.){1,252}[a-z0-9]{2,6})$/i){
+	if($arg{addr} =~ /^(([a-z0-9_\.\+\-\=\?\^\#\&]){1,64})\@((([a-z0-9\-]){1,251}\.){1,252}[a-z0-9]{2,6})$/i){
 		# http://data.iana.org/TLD/tlds-alpha-by-domain.txt  says all tlds >=2 && <= 6
 		# we don't support the .XN-- insanity
 		$user = $1;
@@ -211,7 +216,7 @@ sub CheckAddress {
 			push( @mxhosts, $rr->exchange );
 		}
 		unless(@mxhosts) { # check for an A record...
-			my $resolver = new Net::DNS::Resolver;
+			my $resolver = Net::DNS::Resolver->new();
 			my $dnsquery = $resolver->search( $domain );
 			return 3 unless $dnsquery;
 			foreach my $rr ($dnsquery->answer) {
@@ -297,7 +302,7 @@ sub CheckAddress {
 				next;
 			}
 
-			print $sock "MAIL FROM:<>\r\n";
+			print $sock "MAIL FROM:<$arg{from}>\r\n";
 			my @mf = _getlines($select,$arg{timeout});
 			if(@mf){
 				if($arg{debug} == 1){

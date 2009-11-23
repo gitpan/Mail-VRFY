@@ -1,5 +1,10 @@
 Revision history for Perl extension Mail::VRFY.
 
+1.00 Mon Nov 23 05:06:32 EST 2009
+   - add undocumented option to set envelope sender address
+   - allow ampersand in localpart of email address
+   - increase default timeout during make test
+
 0.58 Wed Aug  6 08:13:32 EDT 2008
 	- fix bug where dns error will not return correct code due to
      timeout feature in 0.57
