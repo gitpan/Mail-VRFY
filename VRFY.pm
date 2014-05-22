@@ -1,9 +1,9 @@
 # Mail::VRFY.pm
-# $Id: VRFY.pm,v 1.00 2009/11/23 05:06:32 jkister Exp $
-# Copyright (c) 2004-2009 Jeremy Kister.
+# $Id: VRFY.pm,v 1.01 2014/05/21 21:09:18 jkister Exp $
+# Copyright (c) 2004-2014 Jeremy Kister.
 # Released under Perl's Artistic License.
 
-$Mail::VRFY::VERSION = "1.00";
+$Mail::VRFY::VERSION = "1.01";
 
 =head1 NAME
 
@@ -11,16 +11,16 @@ Mail::VRFY - Utility to verify an email address
 
 =head1 SYNOPSIS
 
-use Mail::VRFY;
+  use Mail::VRFY;
 
-my $code = Mail::VRFY::CheckAddress($emailaddress);
+  my $code = Mail::VRFY::CheckAddress($emailaddress);
 
-my $code = Mail::VRFY::CheckAddress(addr    => $emailaddress,
-                                    method  => 'extended',
-                                    timeout => 12,
-                                    debug   => 0);
+  my $code = Mail::VRFY::CheckAddress(addr    => $emailaddress,
+                                      method  => 'extended',
+                                      timeout => 12,
+                                      debug   => 0);
 
-my $english = Mail::VRFY::English($code);
+  my $english = Mail::VRFY::English($code);
 
 	
 =head1 DESCRIPTION
@@ -41,7 +41,7 @@ A.  More granular control over what kind of checks to run
 B.  Email address syntax checking is much more stringent.
 
 C.  After making a socket to an authoritative SMTP server,
-    we can start a SMTP converstation, to ensure the
+    we can start a SMTP conversation, to ensure the
     mailserver does not give a failure on RCPT TO.
 
 D.  More return codes.
@@ -74,9 +74,13 @@ B<timeout> - Number of seconds to wait for data from remote host (Default: 12).
 
 B<debug> - Print debugging info to STDERR (0=Off, 1=On).
 
+=back
+
 =head1 RETURN VALUE
 
 Here are a list of return codes and what they mean:
+
+=over 4
 
 =item 0 The email address appears to be valid.
 
@@ -96,6 +100,8 @@ Here are a list of return codes and what they mean:
 
 This module provides an English sub that will convert the code to
 English for you.
+
+=back
 
 =head1 EXAMPLES
 
@@ -175,21 +181,21 @@ sub CheckAddress {
 	}
 	return 1 unless $arg{addr};
 	if(exists($arg{timeout})){
-		print STDERR "using timeout of $arg{timeout} seconds\n" if($arg{debug} == 1);
+		warn "using timeout of $arg{timeout} seconds\n" if( $arg{debug} == 1 );
 	}else{
 		$arg{timeout} = 12;
-		print STDERR "using default timeout of 12 seconds\n" if($arg{debug} == 1);
+		warn "using default timeout of 12 seconds\n" if( $arg{debug} == 1 );
 	}
 
 	if(exists($arg{from})){
-		print STDERR "using specified envelope sender address: $arg{from}\n";
+		warn "using specified envelope sender address: $arg{from}\n" if( $arg{debug} == 1 );
 	}
 
 	my ($user,$domain,@mxhosts);
 
 	# First, we check the syntax of the email address.
 	if(length($arg{addr}) > 256){
-		 print STDERR "email address is more than 256 characters\n" if($arg{debug} == 1);
+		 warn "email address is more than 256 characters\n" if( $arg{debug} == 1 );
 		 return 2;
 	}
 	if($arg{addr} =~ /^(([a-z0-9_\.\+\-\=\?\^\#\&]){1,64})\@((([a-z0-9\-]){1,251}\.){1,252}[a-z0-9]{2,6})$/i){
@@ -198,11 +204,11 @@ sub CheckAddress {
 		$user = $1;
 		$domain = $3;
 		if(length($domain) > 255){
-			print STDERR "domain in email address is more than 255 characters\n" if($arg{debug} == 1);
+			warn "domain in email address is more than 255 characters\n" if( $arg{debug} == 1 );
 			return 2;
 		}
 	}else{
-		 print STDERR "email address does not look correct\n" if($arg{debug} == 1);
+		 warn "email address does not look correct\n" if( $arg{debug} == 1 );
 		 return 2;
 	}
 	return 0 if($arg{method} eq 'syntax');
@@ -227,14 +233,14 @@ sub CheckAddress {
 		}
 		if($arg{debug} == 1){
 			foreach( @mxhosts ) {
-				print STDERR "\@mxhosts -> $_\n";
+				warn "\@mxhosts -> $_\n";
 			}
 		}
 	};
 	alarm(0);
 
 	if($@){
-		print STDERR "problem resolving in the DNS: $@\n" if($arg{debug} == 1);
+		warn "problem resolving in the DNS: $@\n" if( $arg{debug} == 1 );
 		return 3;
 	}
 
@@ -250,7 +256,7 @@ sub CheckAddress {
 		                                 Timeout => $arg{timeout}
 		                                );
 		if($sock){
-			print "connected to ${mx}\n" if($arg{debug} == 1);
+			warn "connected to ${mx}\n" if( $arg{debug} == 1 );
 			$livesmtp=1;
 			if($arg{method} eq 'compat'){
 				close $sock;
@@ -263,19 +269,19 @@ sub CheckAddress {
 			my @banner = _getlines($select,$arg{timeout});
 			if(@banner){
 				if($arg{debug} == 1){
-					print "BANNER: ";
-					for(@banner){ print " $_"; }
-					print "\n";
+					print STDERR "BANNER: ";
+					for(@banner){  print STDERR " $_"; }
+					print STDERR "\n";
 				}
 				unless($banner[-1] =~ /^220\s/){
 					print $sock "QUIT\r\n"; # be nice
 					close $sock;
 					$misbehave=1;
-					print STDERR "$mx misbehaving: bad banner\n" if($arg{debug} == 1);
+					warn "$mx misbehaving: bad banner\n" if( $arg{debug} == 1 );
 					next;
 				}
 			}else{
-				print STDERR "$mx misbehaving while retrieving banner\n" if($arg{debug} == 1);
+				warn "$mx misbehaving while retrieving banner\n" if( $arg{debug} == 1 );
 				$misbehave=1;
 				next;
 			}
@@ -285,19 +291,19 @@ sub CheckAddress {
 			my @helo = _getlines($select,$arg{timeout});
 			if(@helo){
 				if($arg{debug} == 1){
-					print "HELO: ";
-					print for(@helo);
-					print "\n";
+					print STDERR "HELO: ";
+					print STDERR for(@helo);
+					print STDERR "\n";
 				}
 				unless($helo[-1] =~ /^250\s/){
 					print $sock "QUIT\r\n"; # be nice
 					close $sock;
 					$misbehave=1;
-					print STDERR "$mx misbehaving: bad reply to HELO\n" if($arg{debug} == 1);
+					warn "$mx misbehaving: bad reply to HELO\n" if( $arg{debug} == 1 );
 					next;
 				}
 			}else{
-				print STDERR "$mx misbehaving while retrieving helo\n" if($arg{debug} == 1);
+				warn "$mx misbehaving while retrieving helo\n" if( $arg{debug} == 1 );
 				$misbehave=1;
 				next;
 			}
@@ -306,19 +312,19 @@ sub CheckAddress {
 			my @mf = _getlines($select,$arg{timeout});
 			if(@mf){
 				if($arg{debug} == 1){
-					print "MAIL FROM: ";
-					print for(@mf);
-					print "\n";
+					print STDERR "MAIL FROM: ";
+					print STDERR for(@mf);
+					print STDERR "\n";
 				}
 				unless($mf[-1] =~ /^250\s/){
 					print $sock "QUIT\r\n"; # be nice
 					close $sock;
 					$misbehave=1;
-					print STDERR "$mx misbehaving: bad reply to MAIL FROM\n" if($arg{debug} == 1);
+					warn "$mx misbehaving: bad reply to MAIL FROM\n" if( $arg{debug} == 1 );
 					next;
 				}
 			}else{
-				print STDERR "$mx misbehaving while retrieving mail from\n" if($arg{debug} == 1);
+				warn "$mx misbehaving while retrieving mail from\n" if( $arg{debug} == 1 );
 				$misbehave=1;
 				next;
 			}
@@ -329,9 +335,9 @@ sub CheckAddress {
 			close $sock;
 			if(@rt){
 				if($arg{debug} == 1){
-					print "RECIPIENT TO: ";
-					print for(@rt);
-					print "\n";
+					print STDERR "RECIPIENT TO: ";
+					print STDERR for(@rt);
+					print STDERR "\n";
 				}
 				if($rt[-1] =~ /^250\s/){
 					# host accepted
@@ -344,12 +350,12 @@ sub CheckAddress {
 					return 7;
 				}else{
 					$misbehave=1;
-					print STDERR "$mx misbehaving: bad reply to RCPT TO\n" if($arg{debug} == 1);
+					warn "$mx misbehaving: bad reply to RCPT TO\n" if( $arg{debug} == 1 );
 					next;
 				}
 			}else{
 				$misbehave=1;
-				print STDERR "$mx not behaving correcly while retrieving rcpt to\n" if($arg{debug} == 1);
+				warn "$mx not behaving correcly while retrieving rcpt to\n" if( $arg{debug} == 1 );
 				next;
 			}
 		}
